@@ -1,0 +1,6 @@
+{
+  "libpath": "target/debug/libgeyser.dylib",
+  "supabase_url": "https://<supabase_url>.supabase.co",
+  "supabase_key": "<supabase_key>",
+  "programs": ["2gUBz87HJU1w1JWWvNnZ7yjWHJZLhABdj1NrmAUU2A2z"]
+}
