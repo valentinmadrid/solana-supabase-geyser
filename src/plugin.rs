@@ -62,7 +62,7 @@ impl GeyserPlugin for SupabasePlugin {
                 });
             }
         };
-
+        println!("Your supabase url: {:#?} ", &config.supabase_url);
         self.postgres_client = Some(
             Postgrest::new(&config.supabase_url).insert_header("apikey", &config.supabase_key),
         );
@@ -88,27 +88,27 @@ impl GeyserPlugin for SupabasePlugin {
         &mut self,
         account: ReplicaAccountInfoVersions,
         _slot: u64,
-        _is_startup: bool,
+        is_startup: bool,
     ) -> PluginResult<()> {
         let account_info = match account {
             ReplicaAccountInfoVersions::V0_0_1(_) => {
                 return Err(GeyserPluginError::AccountsUpdateError {
-                    msg: "ReplicaAccountInfoVersions::V0_0_1 it not supported".to_string(),
+                    msg: "V1 not supported, please upgrade your Solana CLI Version".to_string(),
                 });
             }
             ReplicaAccountInfoVersions::V0_0_2(account_info) => account_info,
         };
 
-        println!(
-            "account logged with publickey of: {:#?} and owner of {:#?} bytes",
-            bs58::encode(account_info.pubkey).into_string(),
-            account_info.owner.len()
-        );
         self.programs.iter().for_each(|program| {
-            // print hello if the account_info.owner is less than 32 bytes
 
             if program == account_info.owner {
                 let account_pubkey = bs58::encode(account_info.pubkey).into_string();
+                let account_owner = bs58::encode(account_info.owner).into_string();
+                let account_data = account_info.data;
+                let account_lamports = account_info.lamports;
+                let account_executable = account_info.executable;
+                let account_rent_epoch = account_info.rent_epoch;
+                
 
                 let rt = Runtime::new().unwrap();
                 let result = rt.block_on(
@@ -118,13 +118,13 @@ impl GeyserPlugin for SupabasePlugin {
                         .from("accounts")
                         .upsert(
                             serde_json::to_string(
-                                &serde_json::json!([{ "account": account_pubkey, "owner": "yay" }]),
+                                &serde_json::json!([{ "account": account_pubkey, "owner": account_owner, "data": account_data, "executable": account_executable }]),
                             )
                             .unwrap(),
                         )
                         .execute(),
                 );
-                println!("result: {:#?}", result);
+                println!("result: {:#?}, startup: {:#?}", result, is_startup);
             } else {
             }
         });
@@ -148,7 +148,7 @@ impl GeyserPlugin for SupabasePlugin {
 impl Debug for SupabasePlugin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SupabasePlugin")
-            .field("postgres_client", &self.postgres_client.is_some()) // Display whether the client exists or not
+            .field("postgres_client", &self.postgres_client.is_some())
             .finish()
     }
 }
